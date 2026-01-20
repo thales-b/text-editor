@@ -2,15 +2,18 @@ package texteditor.controller;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
-import javafx.scene.layout.AnchorPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -22,88 +25,67 @@ import java.nio.file.StandardOpenOption;
 
 public class TextWindowController {
     @FXML
-    private AnchorPane root;
+    private TabPane root;
+
+    @FXML
+    private Tab tab;
 
     @FXML
     private TextArea textArea;
 
-    private final StringProperty unsavedText = new SimpleStringProperty();
-
-    private File currentFile = null;
+    private final BooleanProperty isDirty = new SimpleBooleanProperty(false);
+    private final ObjectProperty<File> currentFile = new SimpleObjectProperty<>(null);
 
     @FXML
     public void initialize() {
-        Platform.runLater(() ->
-        {
+        Platform.runLater(() -> {
             if (root.getScene() != null) {
                 KeyCombination combo = new KeyCodeCombination(KeyCode.S, KeyCombination.CONTROL_DOWN);
                 root.getScene().getAccelerators().put(combo, this::doSave);
-
             }
         });
 
-        textArea.textProperty().addListener(
-                (observable, oldVal, newVal) ->  {
-                    unsavedText.set(textArea.getText());
-                    System.out.println("Unsaved text after text area change: " + unsavedText.get());
+        textArea.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (oldVal != null) {
+                isDirty.set(true);
+            }
         });
 
-        Platform.runLater(() ->
-                getStage().titleProperty().bind(Bindings.createStringBinding(() -> {
-                    String filename = currentFile == null ? "New Document" : currentFile.getName();
-
-                    return unsavedText.get().isEmpty() ?
-                        filename
-                        : filename + "*";
-        })));
+        tab.textProperty().bind(Bindings.createStringBinding(() -> {
+            String filename = (currentFile.get() == null) ? "New Document" : currentFile.get().getName();
+            return isDirty.get() ? filename + " *" : filename;
+        }, isDirty, currentFile));
     }
 
     public void doSave() {
-        System.out.println("Save...");
-        if (currentFile == null) doSaveAs();
-
-        writeToCurrentFile(StandardOpenOption.APPEND);
+        if (currentFile.get() == null) {
+            doSaveAs();
+            return;
+        }
+        writeToCurrentFile(StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
     }
 
     public void doSaveAs() {
-        System.out.println("Save as...");
         FileChooser fileChooser = new FileChooser();
         fileChooser.setInitialFileName("New Document.txt");
-        fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("*.", "All files"),
-                new FileChooser.ExtensionFilter("*.txt", "Text files")
-        );
-        Stage stage = getStage();
-        // 'Save as' potentially changes the current file
-        currentFile = fileChooser.showSaveDialog(stage);
-        if (currentFile != null) {
-            writeToCurrentFile(
-                    // Create file if it does not exist
-                    StandardOpenOption.CREATE,
-                    // open it for writing
-                    StandardOpenOption.WRITE,
-                    // remove previous content before writing
-                    StandardOpenOption.TRUNCATE_EXISTING
-            );
+        File file = fileChooser.showSaveDialog(getStage());
+        if (file != null) {
+            currentFile.set(file);
+            writeToCurrentFile(StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
         }
     }
 
     private void writeToCurrentFile(StandardOpenOption... options) {
         try {
-            Path path = currentFile.getAbsoluteFile().toPath();
-            Files.writeString(path, unsavedText.get(), options);
-
-            System.out.println("Saved text: \n\"" + unsavedText + "\"\n To file '" + currentFile.getName() + "'");
-            unsavedText.set("");
-            System.out.println("Unsaved text after writing: " + unsavedText.get());
+            Path path = currentFile.get().getAbsoluteFile().toPath();
+            Files.writeString(path, textArea.getText(), options);
+            isDirty.set(false);
         } catch (IOException ex) {
             System.out.println("Failed to write in file " + currentFile.getName() + "\nCause: " + ex.getMessage());
         }
     }
 
     private Stage getStage() {
-        Scene scene = root.getScene();
-        System.out.println(scene);
-        return (Stage) scene.getWindow();
+        return (Stage) root.getScene().getWindow();
     }
 }

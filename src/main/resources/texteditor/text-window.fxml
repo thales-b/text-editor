@@ -11,9 +11,9 @@
 <?import javafx.scene.text.Font?>
 
 
-<TabPane prefHeight="800.0" prefWidth="600.0" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="texteditor.controller.TextWindowController">
+<TabPane prefHeight="800.0" prefWidth="600.0" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="texteditor.controller.TextWindowController" fx:id="root">
   <tabs>
-    <Tab text="Untitled Tab 1">
+    <Tab text="New Document" fx:id="tab">
          <content>
             <VBox prefHeight="200.0" prefWidth="100.0">
                <children>
@@ -37,7 +37,7 @@
                       </Menu>
                     </menus>
                   </MenuBar>
-                       <TextArea fx:id="textArea" prefHeight="800.0" prefWidth="714.0" VBox.vgrow="ALWAYS">
+                       <TextArea fx:id="textArea" prefHeight="800.0" prefWidth="714.0" VBox.vgrow="ALWAYS" wrapText="true">
                      <font>
                         <Font size="18.0" />
                      </font>
