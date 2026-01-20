@@ -22,7 +22,8 @@
                       <Menu mnemonicParsing="false" text="File">
                         <items>
                             <MenuItem mnemonicParsing="false" onAction="#doSave" text="Save" />
-                          <MenuItem mnemonicParsing="false" text="Close" />
+                            <MenuItem mnemonicParsing="false" onAction="#doSaveAs" text="Save as..." />
+                            <MenuItem mnemonicParsing="false" text="Close" />
                         </items>
                       </Menu>
                       <Menu mnemonicParsing="false" text="Edit">

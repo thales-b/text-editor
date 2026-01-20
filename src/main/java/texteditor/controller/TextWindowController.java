@@ -2,10 +2,7 @@ package texteditor.controller;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.*;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.scene.control.Tab;
@@ -35,6 +32,7 @@ public class TextWindowController {
 
     private final BooleanProperty isDirty = new SimpleBooleanProperty(false);
     private final ObjectProperty<File> currentFile = new SimpleObjectProperty<>(null);
+    private final StringProperty lastSavedContent = new SimpleStringProperty("");
 
     @FXML
     public void initialize() {
@@ -45,16 +43,16 @@ public class TextWindowController {
             }
         });
 
-        textArea.textProperty().addListener((obs, oldVal, newVal) -> {
-            if (oldVal != null) {
-                isDirty.set(true);
-            }
-        });
-
         tab.textProperty().bind(Bindings.createStringBinding(() -> {
             String filename = (currentFile.get() == null) ? "New Document" : currentFile.get().getName();
-            return isDirty.get() ? filename + " *" : filename;
-        }, isDirty, currentFile));
+
+            String current = textArea.getText();
+            String saved = lastSavedContent.get();
+
+            boolean isModified = !current.equals(saved);
+
+            return isModified ? filename + "*" : filename;
+        }, textArea.textProperty(), lastSavedContent, currentFile));
     }
 
     public void doSave() {
@@ -69,17 +67,29 @@ public class TextWindowController {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setInitialFileName("New Document.txt");
         File file = fileChooser.showSaveDialog(getStage());
-        if (file != null) {
-            currentFile.set(file);
-            writeToCurrentFile(StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+        if (file == null) {
+            System.out.println("Could not save file");
+            return;
         }
+        currentFile.set(file);
+        writeToCurrentFile(StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+    }
+
+    public void doOpen() {
+        FileChooser fileChooser = new FileChooser();
+        File file = fileChooser.showOpenDialog(getStage());
+        if (file == null) {
+            System.out.println("Could not open file");
+            return;
+        }
+        currentFile.set(file);
     }
 
     private void writeToCurrentFile(StandardOpenOption... options) {
         try {
             Path path = currentFile.get().getAbsoluteFile().toPath();
             Files.writeString(path, textArea.getText(), options);
-            isDirty.set(false);
+            lastSavedContent.set(textArea.getText());
         } catch (IOException ex) {
             System.out.println("Failed to write in file " + currentFile.getName() + "\nCause: " + ex.getMessage());
         }
