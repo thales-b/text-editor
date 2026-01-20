@@ -30,7 +30,6 @@ public class TextWindowController {
     @FXML
     private TextArea textArea;
 
-    private final BooleanProperty isDirty = new SimpleBooleanProperty(false);
     private final ObjectProperty<File> currentFile = new SimpleObjectProperty<>(null);
     private final StringProperty lastSavedContent = new SimpleStringProperty("");
 
@@ -83,6 +82,15 @@ public class TextWindowController {
             return;
         }
         currentFile.set(file);
+
+        String content = "";
+        try {
+            content = Files.readString(file.toPath());
+        } catch (IOException e) {
+            System.out.println("Failed to read opened file, Cause: " + e.getMessage());
+        }
+        textArea.setText(content);
+        lastSavedContent.setValue(content);
     }
 
     private void writeToCurrentFile(StandardOpenOption... options) {
