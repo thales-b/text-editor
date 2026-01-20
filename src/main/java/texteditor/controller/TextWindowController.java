@@ -1,6 +1,9 @@
 package texteditor.controller;
 
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.scene.control.TextArea;
@@ -24,7 +27,9 @@ public class TextWindowController {
     @FXML
     private TextArea textArea;
 
-    private String unsavedText = "";
+    private final StringProperty unsavedText = new SimpleStringProperty();
+
+    private File currentFile = null;
 
     @FXML
     public void initialize() {
@@ -39,31 +44,40 @@ public class TextWindowController {
 
         textArea.textProperty().addListener(
                 (observable, oldVal, newVal) ->  {
-                    unsavedText = textArea.getText();
-                    System.out.println("Unsaved text after text area change: " + unsavedText);
+                    unsavedText.set(textArea.getText());
+                    System.out.println("Unsaved text after text area change: " + unsavedText.get());
         });
+
+        Platform.runLater(() ->
+                getStage().titleProperty().bind(Bindings.createStringBinding(() -> {
+                    String filename = currentFile == null ? "New Document" : currentFile.getName();
+
+                    return unsavedText.get().isEmpty() ?
+                        filename
+                        : filename + "*";
+        })));
     }
 
     public void doSave() {
+        System.out.println("Save...");
+        if (currentFile == null) doSaveAs();
+
+        writeToCurrentFile(StandardOpenOption.APPEND);
+    }
+
+    public void doSaveAs() {
+        System.out.println("Save as...");
         FileChooser fileChooser = new FileChooser();
         fileChooser.setInitialFileName("New Document.txt");
         fileChooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("*.", "All files"),
                 new FileChooser.ExtensionFilter("*.txt", "Text files")
         );
-
-        Scene scene = root.getScene();
-        Stage stage = (Stage) scene.getWindow();
-        File file = fileChooser.showSaveDialog(stage);
-        if (file != null) {
-            writeToFile(file);
-        }
-    }
-
-    private void writeToFile(File file) {
-        try {
-            Path path = file.getAbsoluteFile().toPath();
-            Files.writeString(path, unsavedText,
+        Stage stage = getStage();
+        // 'Save as' potentially changes the current file
+        currentFile = fileChooser.showSaveDialog(stage);
+        if (currentFile != null) {
+            writeToCurrentFile(
                     // Create file if it does not exist
                     StandardOpenOption.CREATE,
                     // open it for writing
@@ -71,12 +85,25 @@ public class TextWindowController {
                     // remove previous content before writing
                     StandardOpenOption.TRUNCATE_EXISTING
             );
-
-            System.out.println("Saved text: \n\"" + unsavedText + "\"\n To file '" + file.getName() + "'");
-            unsavedText = "";
-            System.out.println("Unsaved text after writing: " + unsavedText);
-        } catch (IOException ex) {
-            System.out.println("Failed to write in file " + file.getName() + "\nCause: " + ex.getMessage());
         }
+    }
+
+    private void writeToCurrentFile(StandardOpenOption... options) {
+        try {
+            Path path = currentFile.getAbsoluteFile().toPath();
+            Files.writeString(path, unsavedText.get(), options);
+
+            System.out.println("Saved text: \n\"" + unsavedText + "\"\n To file '" + currentFile.getName() + "'");
+            unsavedText.set("");
+            System.out.println("Unsaved text after writing: " + unsavedText.get());
+        } catch (IOException ex) {
+            System.out.println("Failed to write in file " + currentFile.getName() + "\nCause: " + ex.getMessage());
+        }
+    }
+
+    private Stage getStage() {
+        Scene scene = root.getScene();
+        System.out.println(scene);
+        return (Stage) scene.getWindow();
     }
 }
