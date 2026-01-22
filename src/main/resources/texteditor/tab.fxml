@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.scene.text.Font?>
+<Tab xmlns:fx="http://javafx.com/fxml" text="New Document" fx:id="tab" fx:controller="texteditor.controller.TabController">
+    <VBox prefHeight="200.0" prefWidth="100.0">
+        <children>
+            <MenuBar>
+                <menus>
+                    <Menu mnemonicParsing="false" text="File">
+                        <items>
+                            <MenuItem mnemonicParsing="false" onAction="#doOpen" text="Open file"/>
+                            <MenuItem mnemonicParsing="false" onAction="#doSave" text="Save"/>
+                            <MenuItem mnemonicParsing="false" onAction="#doSaveAs" text="Save as..."/>
+                            <MenuItem mnemonicParsing="false" text="Exit" onAction="#doExit"/>
+                        </items>
+                    </Menu>
+                </menus>
+            </MenuBar>
+            <TextArea fx:id="textArea" prefHeight="800.0" prefWidth="714.0" wrapText="true" VBox.vgrow="ALWAYS">
+                <font>
+                    <Font size="18.0"/>
+                </font>
+            </TextArea>
+        </children>
+    </VBox>
+</Tab>
