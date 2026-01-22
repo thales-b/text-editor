@@ -37,9 +37,7 @@ public class TabController {
         Platform.runLater(() -> {
             root = tab.getTabPane();
 
-            if (root.getScene() != null) {
-                KeyCombination combo = new KeyCodeCombination(KeyCode.S, KeyCombination.CONTROL_DOWN);
-                root.getScene().getAccelerators().put(combo, this::doSave);
+            if (root != null && root.getScene() != null) {
                 fileOps = new GUIFileOperations(getStage());
             }
         });
