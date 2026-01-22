@@ -25,5 +25,9 @@
                 </font>
             </TextArea>
         </children>
+
+        <HBox>
+            <Label fx:id="statusLabel" text="Ln 1, Col 1" />
+        </HBox>
     </VBox>
 </Tab>

@@ -8,9 +8,6 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyCodeCombination;
-import javafx.scene.input.KeyCombination;
 import javafx.stage.Stage;
 import texteditor.model.GUIFileOperations;
 
@@ -26,6 +23,9 @@ public class TabController {
 
     @FXML
     private TextArea textArea;
+
+    @FXML
+    private Label statusLabel;
 
     private final ObjectProperty<File> currentFile = new SimpleObjectProperty<>(null);
     private final StringProperty lastSavedContent = new SimpleStringProperty("");
@@ -50,6 +50,11 @@ public class TabController {
             boolean isModified = !current.equals(saved);
             return isModified ? filename + "*" : filename;
         }, textArea.textProperty(), lastSavedContent, currentFile));
+
+
+        textArea.caretPositionProperty().addListener((observable, oldPos, newPos) -> {
+            updateStatus(newPos.intValue());
+        });
     }
 
     public void doSave() {
@@ -120,6 +125,31 @@ public class TabController {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    private void updateStatus(int caretPos) {
+        String text = textArea.getText();
+
+        int line = 1;
+        int col = 1;
+
+        try {
+            String textUntilCaret = text.substring(0, caretPos);
+
+            line = textUntilCaret.length() - textUntilCaret.replace("\n", "").length() + 1;
+
+            int lastNlIndex = textUntilCaret.lastIndexOf('\n');
+            if (lastNlIndex != -1) {
+                col = caretPos - lastNlIndex;
+            } else {
+                col = caretPos + 1;
+            }
+
+        } catch (IndexOutOfBoundsException e) {
+            System.out.println("Couldn't calculate caret pos: " + e.getCause());
+        }
+
+        statusLabel.setText("Ln " + line + ", Col " + col);
     }
 
     private Stage getStage() {
